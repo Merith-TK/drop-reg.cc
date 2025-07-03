@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Registered Links - Drop-reg.cc</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 1000px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #333; 
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .links-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .links-table th,
+        .links-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .links-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .links-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .short-code {
+            font-family: monospace;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .discord-url {
+            word-break: break-all;
+            max-width: 300px;
+        }
+        .created-at {
+            color: #666;
+            font-size: 14px;
+        }
+        .no-links {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+        }
+        .back-link:hover {
+            background: #007bff;
+            color: white;
+        }
+        .test-link {
+            color: #28a745;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .test-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>All Registered Links</h1>
+        
+        {{if .Links}}
+        <table class="links-table">
+            <thead>
+                <tr>
+                    <th>Short Code</th>
+                    <th>Discord URL</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Links}}
+                <tr>
+                    <td class="short-code">{{.ShortCode}}</td>
+                    <td class="discord-url">{{.DiscordURL}}</td>
+                    <td class="created-at">{{.CreatedAt}}</td>
+                    <td>
+                        <a href="/{{.ShortCode}}" class="test-link" target="_blank">Test</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <div class="no-links">
+            No links have been registered yet.
+        </div>
+        {{end}}
+        
+        <div style="text-align: center;">
+            <a href="/" class="back-link">Register New Link</a>
+        </div>
+    </div>
+</body>
+</html>
