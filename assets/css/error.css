@@ -1,0 +1,56 @@
+/* Styles for error pages - Dark Theme */
+
+.error { 
+    color: #f87171;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.error-code {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #f87171;
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+}
+
+.error-message {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #f3f4f6;
+}
+
+.error-details {
+    color: #9ca3af;
+    margin-bottom: 30px;
+    background: #1f2937;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #f87171;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.error-actions {
+    text-align: center;
+}
+
+.error-actions a {
+    display: inline-block;
+    margin: 10px 15px;
+    padding: 12px 24px;
+    border: 1px solid #60a5fa;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-weight: 500;
+    color: #60a5fa;
+}
+
+.error-actions a:hover {
+    background: #60a5fa;
+    color: #1a1a1a;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(96, 165, 250, 0.3);
+}

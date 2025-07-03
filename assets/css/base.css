@@ -1,0 +1,144 @@
+/* Base styles for all pages - Dark Theme */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    max-width: 800px; 
+    margin: 50px auto; 
+    padding: 20px; 
+    background-color: #1a1a1a;
+    color: #e4e4e7;
+    line-height: 1.6;
+}
+
+.container { 
+    background: #262626;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border: 1px solid #404040;
+}
+
+h1 { 
+    color: #f8fafc; 
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* Links */
+a { 
+    color: #60a5fa; 
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 5px;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #60a5fa;
+    border-color: #60a5fa;
+}
+
+.btn-outline:hover {
+    background: #60a5fa;
+    color: #1a1a1a;
+}
+
+.btn-success {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.btn-success:hover {
+    background: #059669;
+    border-color: #047857;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Forms */
+.form-group { 
+    margin: 20px 0; 
+}
+
+input[type="text"], 
+input[type="url"] { 
+    padding: 14px; 
+    margin: 5px; 
+    width: 300px;
+    max-width: 100%;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+    background-color: #1f1f1f;
+    color: #e4e4e7;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background-color: #262626;
+}
+
+input[type="text"]::placeholder,
+input[type="url"]::placeholder {
+    color: #9ca3af;
+}
+
+/* Utility classes */
+.text-center {
+    text-align: center;
+}
+
+.mb-10 { margin-bottom: 10px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+.mt-20 { margin-top: 20px; }
+.mt-30 { margin-top: 30px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+    body {
+        margin: 20px auto;
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 20px;
+    }
+    
+    input[type="text"], 
+    input[type="url"] {
+        width: 100%;
+    }
+}

@@ -58,7 +58,7 @@ func NewServer(dbPath string) (*Server, error) {
 		db:        db,
 		templates: templates,
 	}
-	
+
 	if err := server.initDB(); err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -78,7 +78,7 @@ func (s *Server) initDB() error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_short_code ON url_mappings(short_code);
 	`
-	
+
 	_, err := s.db.Exec(query)
 	return err
 }
@@ -86,25 +86,31 @@ func (s *Server) initDB() error {
 // ServeHTTP implements http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/")
-	
+
 	// Handle root path
 	if path == "" {
 		s.handleRoot(w, r)
 		return
 	}
-	
+
 	// Handle registration
 	if path == "register" {
 		s.handleRegister(w, r)
 		return
 	}
-	
+
 	// Handle list view
 	if path == "list" {
 		s.handleList(w, r)
 		return
 	}
-	
+
+	// Handle static assets
+	if strings.HasPrefix(path, "assets/") {
+		s.handleStatic(w, r)
+		return
+	}
+
 	// Handle short code redirect
 	s.handleRedirect(w, r, path)
 }
@@ -121,26 +127,26 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request, shortCode string) {
 	// Convert to lowercase for lookup
 	shortCode = strings.ToLower(shortCode)
-	
+
 	var discordURL string
 	err := s.db.QueryRow(
 		"SELECT discord_url FROM url_mappings WHERE short_code = ? AND (expires_at IS NULL OR expires_at > datetime('now'))",
 		shortCode,
 	).Scan(&discordURL)
-	
+
 	if err == sql.ErrNoRows {
-		s.renderError(w, 404, "Short Link Not Found", 
+		s.renderError(w, 404, "Short Link Not Found",
 			fmt.Sprintf("The short code '%s' was not found.", shortCode),
 			"Please check the link or register a new one.")
 		return
 	}
-	
+
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
 		return
 	}
-	
+
 	// Redirect to Discord
 	http.Redirect(w, r, discordURL, http.StatusFound)
 }
@@ -150,27 +156,27 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	shortCode := strings.ToLower(strings.TrimSpace(r.FormValue("short_code")))
 	discordURL := strings.TrimSpace(r.FormValue("discord_url"))
-	
+
 	// Validate inputs
 	if shortCode == "" {
 		http.Error(w, "Short code is required", http.StatusBadRequest)
 		return
 	}
-	
+
 	if !discordURLRegex.MatchString(discordURL) {
 		http.Error(w, "Invalid Discord URL. Must be https://discord.gg/...", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Insert into database
 	_, err := s.db.Exec(
 		"INSERT INTO url_mappings (short_code, discord_url) VALUES (?, ?)",
 		shortCode, discordURL,
 	)
-	
+
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			http.Error(w, "Short code already exists", http.StatusConflict)
@@ -180,7 +186,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Database error: %v", err)
 		return
 	}
-	
+
 	// Success response
 	w.Header().Set("Content-Type", "text/html")
 	data := struct {
@@ -190,7 +196,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		ShortCode:  shortCode,
 		DiscordURL: discordURL,
 	}
-	
+
 	err = s.templates.ExecuteTemplate(w, "success.html", data)
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
@@ -219,12 +225,12 @@ func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-		
+
 		// Parse and format the created_at time
 		if t, err := time.Parse("2006-01-02 15:04:05", mapping.CreatedAt); err == nil {
 			mapping.CreatedAt = t.Format("Jan 2, 2006 15:04")
 		}
-		
+
 		links = append(links, mapping)
 	}
 
@@ -242,10 +248,29 @@ func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
+	// Remove leading slash and serve from assets directory
+	filePath := strings.TrimPrefix(r.URL.Path, "/")
+
+	// Security: ensure we can only serve files from assets directory
+	if !strings.HasPrefix(filePath, "assets/") {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set appropriate content type for CSS files
+	if strings.HasSuffix(filePath, ".css") {
+		w.Header().Set("Content-Type", "text/css")
+	}
+
+	// Serve the static file
+	http.ServeFile(w, r, filePath)
+}
+
 func (s *Server) renderError(w http.ResponseWriter, statusCode int, title, message, details string) {
 	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "text/html")
-	
+
 	data := struct {
 		StatusCode int
 		Title      string
