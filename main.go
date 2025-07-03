@@ -103,14 +103,25 @@ func NewServer(dbPath string, config *Config) (*Server, error) {
 	// Initialize Discord OAuth client
 	redirectURI := config.Server.RedirectURI
 	if redirectURI == "" {
-		redirectURI = "http://localhost:8080/auth/callback"
+		// Auto-generate redirect URI from domain
+		if config.Server.Domain != "" {
+			// Use HTTPS for production domains, HTTP for localhost
+			if strings.Contains(config.Server.Domain, "localhost") || strings.Contains(config.Server.Domain, "127.0.0.1") {
+				redirectURI = fmt.Sprintf("http://%s/auth/callback", config.Server.Domain)
+			} else {
+				redirectURI = fmt.Sprintf("https://%s/auth/callback", config.Server.Domain)
+			}
+		} else {
+			// Fallback to localhost
+			redirectURI = "http://localhost:8080/auth/callback"
+		}
 	}
 
 	discordAuth := disgoauth.Init(&disgoauth.Client{
 		ClientID:     config.Client.ID,
 		ClientSecret: config.Client.Secret,
 		RedirectURI:  redirectURI,
-		Scopes:       []string{disgoauth.ScopeIdentify},
+		Scopes:       []string{disgoauth.ScopeIdentify}, // identify scope provides: id, username, avatar, discriminator
 	})
 
 	server := &Server{
@@ -134,7 +145,7 @@ func (s *Server) initDB() error {
 		discord_url TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		expires_at DATETIME,
-		owner_id TEXT
+		owner_id TEXT NOT NULL
 	);
 	CREATE INDEX IF NOT EXISTS idx_short_code ON url_mappings(short_code);
 	
@@ -206,8 +217,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	// Check if user is authenticated
-	user, _ := s.getCurrentUser(r)
+	// Check if user is authenticated - redirect to login if not
+	user, err := s.getCurrentUser(r)
+	if err != nil {
+		// Not authenticated, redirect to login
+		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		return
+	}
 
 	data := struct {
 		User *User
@@ -216,7 +232,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err := s.templates.ExecuteTemplate(w, "index.html", data)
+	err = s.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
@@ -251,6 +267,14 @@ func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request, shortCod
 }
 
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	// Check if user is authenticated - require login for registration
+	user, err := s.getCurrentUser(r)
+	if err != nil {
+		// Not authenticated, redirect to login
+		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -270,14 +294,11 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current user (optional for now, but will be required later)
-	var ownerID *string
-	if user, err := s.getCurrentUser(r); err == nil {
-		ownerID = &user.ID
-	}
+	// User is authenticated, so always set owner_id
+	ownerID := user.ID
 
 	// Insert into database
-	_, err := s.db.Exec(
+	_, err = s.db.Exec(
 		"INSERT INTO url_mappings (short_code, discord_url, owner_id) VALUES (?, ?, ?)",
 		shortCode, discordURL, ownerID,
 	)
@@ -310,14 +331,23 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
+	// Check if user is authenticated - require login to view list
+	user, err := s.getCurrentUser(r)
+	if err != nil {
+		// Not authenticated, redirect to login
+		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		return
+	}
+
+	// Only show links owned by the current user
 	rows, err := s.db.Query(`
 		SELECT short_code, discord_url, created_at 
 		FROM url_mappings 
-		WHERE expires_at IS NULL OR expires_at > datetime('now')
+		WHERE owner_id = ? AND (expires_at IS NULL OR expires_at > datetime('now'))
 		ORDER BY created_at DESC
-	`)
+	`, user.ID)
 	if err != nil {
-		s.renderError(w, 500, "Database Error", "Failed to retrieve links", err.Error())
+		s.renderError(w, 500, "Database Error", "Failed to retrieve your links", err.Error())
 		return
 	}
 	defer rows.Close()
@@ -340,8 +370,10 @@ func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
+		User  *User
 		Links []URLMapping
 	}{
+		User:  user,
 		Links: links,
 	}
 
