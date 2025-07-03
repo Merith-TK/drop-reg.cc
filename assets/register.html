@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register New Link - Drop-reg.cc</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/index.css">
+</head>
+<body>
+    <div class="container">
+        {{if .User}}
+        <div style="text-align: right; margin-bottom: 20px;">
+            <span style="color: #9ca3af;">Welcome, {{.User.Username}}!</span>
+            <a href="/" style="margin-left: 15px;" class="btn btn-outline">Dashboard</a>
+            <a href="/auth/logout" style="margin-left: 10px;">Logout</a>
+        </div>
+        {{else}}
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="/auth/login" class="btn btn-outline">Login with Discord</a>
+        </div>
+        {{end}}
+
+        <h1>Register New Link</h1>
+        <p class="subtitle">Create a short URL for your Discord server invite</p>
+        
+        <div class="info">
+            <strong>How it works:</strong> Register a short code to create easy-to-share links like <code>drop-reg.cc/597</code>
+            {{if not .User}}
+            <br><br>
+            <em>💡 Tip: Login with Discord to manage your links and prevent them from being overwritten!</em>
+            {{end}}
+        </div>
+        
+        <form method="POST" action="/register" class="url-form">
+            <div class="form-group">
+                <label for="short_code">Short Code</label>
+                <div class="input-prefix">
+                    <span>drop-reg.cc/</span>
+                    <input type="text" id="short_code" name="short_code" required 
+                           pattern="[a-zA-Z0-9]+" 
+                           title="Only letters and numbers allowed"
+                           placeholder="597">
+                </div>
+                <div class="help-text">Only letters and numbers, will be converted to lowercase</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="discord_url">Discord Invite URL</label>
+                <input type="url" id="discord_url" name="discord_url" required 
+                       pattern="https://discord\.gg/[a-zA-Z0-9]+"
+                       title="Must be a valid Discord invite URL"
+                       placeholder="https://discord.gg/helldivers">
+                <div class="help-text">Must start with https://discord.gg/</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Register Short Link</button>
+        </form>
+    </div>
+</body>
+</html>

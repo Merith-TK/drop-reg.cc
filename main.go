@@ -176,15 +176,15 @@ func (s *Server) initDB() error {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/")
 
-	// Handle root path
+	// Handle root path (dashboard)
 	if path == "" {
-		s.handleRoot(w, r)
+		s.handleDashboard(w, r)
 		return
 	}
 
-	// Handle registration
+	// Handle registration page
 	if path == "register" {
-		s.handleRegister(w, r)
+		s.handleRegisterPage(w, r)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handleRedirect(w, r, path)
 }
 
-func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated - redirect to login if not
 	user, err := s.getCurrentUser(r)
 	if err != nil {
@@ -225,14 +225,77 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
-		User *User
-	}{
-		User: user,
+	// Handle GET request - show registration form
+	if r.Method == http.MethodGet {
+		data := struct {
+			User *User
+		}{
+			User: user,
+		}
+
+		w.Header().Set("Content-Type", "text/html")
+		err = s.templates.ExecuteTemplate(w, "register.html", data)
+		if err != nil {
+			http.Error(w, "Template error", http.StatusInternalServerError)
+			log.Printf("Template error: %v", err)
+		}
+		return
 	}
 
+	// Handle POST request - process registration
+	if r.Method == http.MethodPost {
+		s.handleRegisterSubmit(w, r, user)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request, user *User) {
+	shortCode := strings.ToLower(strings.TrimSpace(r.FormValue("short_code")))
+	discordURL := strings.TrimSpace(r.FormValue("discord_url"))
+
+	// Validate inputs
+	if shortCode == "" {
+		http.Error(w, "Short code is required", http.StatusBadRequest)
+		return
+	}
+
+	if !discordURLRegex.MatchString(discordURL) {
+		http.Error(w, "Invalid Discord URL. Must be https://discord.gg/...", http.StatusBadRequest)
+		return
+	}
+
+	// User is authenticated, so always set owner_id
+	ownerID := user.ID
+
+	// Insert into database
+	_, err := s.db.Exec(
+		"INSERT INTO url_mappings (short_code, discord_url, owner_id) VALUES (?, ?, ?)",
+		shortCode, discordURL, ownerID,
+	)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			http.Error(w, "Short code already exists", http.StatusConflict)
+			return
+		}
+		http.Error(w, "Failed to register URL", http.StatusInternalServerError)
+		log.Printf("Database error: %v", err)
+		return
+	}
+
+	// Success response
 	w.Header().Set("Content-Type", "text/html")
-	err = s.templates.ExecuteTemplate(w, "index.html", data)
+	data := struct {
+		ShortCode  string
+		DiscordURL string
+	}{
+		ShortCode:  shortCode,
+		DiscordURL: discordURL,
+	}
+
+	err = s.templates.ExecuteTemplate(w, "success.html", data)
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
@@ -264,70 +327,6 @@ func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request, shortCod
 
 	// Redirect to Discord
 	http.Redirect(w, r, discordURL, http.StatusFound)
-}
-
-func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	// Check if user is authenticated - require login for registration
-	user, err := s.getCurrentUser(r)
-	if err != nil {
-		// Not authenticated, redirect to login
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	shortCode := strings.ToLower(strings.TrimSpace(r.FormValue("short_code")))
-	discordURL := strings.TrimSpace(r.FormValue("discord_url"))
-
-	// Validate inputs
-	if shortCode == "" {
-		http.Error(w, "Short code is required", http.StatusBadRequest)
-		return
-	}
-
-	if !discordURLRegex.MatchString(discordURL) {
-		http.Error(w, "Invalid Discord URL. Must be https://discord.gg/...", http.StatusBadRequest)
-		return
-	}
-
-	// User is authenticated, so always set owner_id
-	ownerID := user.ID
-
-	// Insert into database
-	_, err = s.db.Exec(
-		"INSERT INTO url_mappings (short_code, discord_url, owner_id) VALUES (?, ?, ?)",
-		shortCode, discordURL, ownerID,
-	)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			http.Error(w, "Short code already exists", http.StatusConflict)
-			return
-		}
-		http.Error(w, "Failed to register URL", http.StatusInternalServerError)
-		log.Printf("Database error: %v", err)
-		return
-	}
-
-	// Success response
-	w.Header().Set("Content-Type", "text/html")
-	data := struct {
-		ShortCode  string
-		DiscordURL string
-	}{
-		ShortCode:  shortCode,
-		DiscordURL: discordURL,
-	}
-
-	err = s.templates.ExecuteTemplate(w, "success.html", data)
-	if err != nil {
-		http.Error(w, "Template error", http.StatusInternalServerError)
-		log.Printf("Template error: %v", err)
-	}
 }
 
 func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
@@ -448,8 +447,8 @@ func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(30 * 24 * time.Hour), // 30 days
 	})
 
-	// Redirect to dashboard
-	http.Redirect(w, r, "/dashboard", http.StatusFound)
+	// Redirect to dashboard (root)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -469,7 +468,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0), // Expire immediately
 	})
 
-	// Redirect to home
+	// Redirect to dashboard (root)
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -579,7 +578,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = s.templates.ExecuteTemplate(w, "dashboard.html", data)
+	err = s.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
@@ -658,7 +657,6 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Success - redirect back to dashboard with a success message
-	// We could implement flash messages, but for now just redirect
-	http.Redirect(w, r, "/dashboard", http.StatusFound)
+	// Success - redirect back to dashboard (root)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
