@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Drop-reg.cc</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/list.css">
+    <style>
+        .user-info {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #374151;
+        }
+        .user-details h2 {
+            margin: 0 0 5px 0;
+            color: #f3f4f6;
+        }
+        .user-details p {
+            margin: 0;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .dashboard-actions .btn {
+            flex: 1;
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body style="max-width: 1000px;">
+    <div class="container">
+        <div class="user-info">
+            {{if .User.Avatar}}
+                <img src="https://cdn.discordapp.com/avatars/{{.User.ID}}/{{.User.Avatar}}.png" alt="Avatar" class="user-avatar">
+            {{else}}
+                <div class="user-avatar"></div>
+            {{end}}
+            <div class="user-details">
+                <h2>{{.User.Username}}#{{.User.Discriminator}}</h2>
+                <p>Managing your Discord invite links</p>
+            </div>
+            <div style="margin-left: auto;">
+                <a href="/auth/logout" class="btn btn-outline">Logout</a>
+            </div>
+        </div>
+
+        <div class="dashboard-actions">
+            <a href="/" class="btn">Register New Link</a>
+            <a href="/list" class="btn btn-outline">View All Public Links</a>
+        </div>
+
+        <h1>Your Registered Links</h1>
+        
+        {{if .Links}}
+        <table class="links-table">
+            <thead>
+                <tr>
+                    <th>Short Code</th>
+                    <th>Discord URL</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Links}}
+                <tr>
+                    <td class="short-code">{{.ShortCode}}</td>
+                    <td class="discord-url">{{.DiscordURL}}</td>
+                    <td class="created-at">{{.CreatedAt}}</td>
+                    <td>
+                        <a href="/{{.ShortCode}}" class="test-link" target="_blank">Test</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <div class="no-links">
+            You haven't registered any links yet. <br>
+            <a href="/" style="color: #60a5fa; margin-top: 10px; display: inline-block;">Register your first link</a>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>

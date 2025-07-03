@@ -7,11 +7,27 @@
 </head>
 <body>
     <div class="container">
+        {{if .User}}
+        <div style="text-align: right; margin-bottom: 20px;">
+            <span style="color: #9ca3af;">Welcome, {{.User.Username}}!</span>
+            <a href="/dashboard" style="margin-left: 15px;" class="btn btn-outline">Dashboard</a>
+            <a href="/auth/logout" style="margin-left: 10px;">Logout</a>
+        </div>
+        {{else}}
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="/auth/login" class="btn btn-outline">Login with Discord</a>
+        </div>
+        {{end}}
+
         <h1>Drop-reg.cc</h1>
         <p class="subtitle">URL Shortener for Helldivers Community Discord Servers</p>
         
         <div class="info">
             <strong>How it works:</strong> Register a short code to create easy-to-share links like <code>drop-reg.cc/597</code>
+            {{if not .User}}
+            <br><br>
+            <em>💡 Tip: Login with Discord to manage your links and prevent them from being overwritten!</em>
+            {{end}}
         </div>
         
         <div class="form-container">
@@ -30,6 +46,9 @@
         
         <div class="navigation-links">
             <a href="/list">View All Registered Links</a>
+            {{if .User}}
+            <a href="/dashboard">My Dashboard</a>
+            {{end}}
         </div>
     </div>
 </body>
