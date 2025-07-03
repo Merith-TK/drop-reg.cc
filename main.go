@@ -212,6 +212,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle delete (requires auth)
+	if path == "delete" {
+		s.handleDelete(w, r)
+		return
+	}
+
 	// Handle short code redirect
 	s.handleRedirect(w, r, path)
 }
@@ -639,4 +645,81 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
 	}
+}
+
+func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
+	// Check if user is authenticated
+	user, err := s.getCurrentUser(r)
+	if err != nil {
+		// Not authenticated, redirect to login
+		http.Redirect(w, r, "/auth/login", http.StatusFound)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	shortCode := strings.ToLower(strings.TrimSpace(r.FormValue("short_code")))
+	if shortCode == "" {
+		http.Error(w, "Short code is required", http.StatusBadRequest)
+		return
+	}
+
+	// First check if the link exists and belongs to the user
+	var existingOwnerID string
+	err = s.db.QueryRow(
+		"SELECT owner_id FROM url_mappings WHERE short_code = ?",
+		shortCode,
+	).Scan(&existingOwnerID)
+
+	if err == sql.ErrNoRows {
+		s.renderError(w, 404, "Link Not Found",
+			fmt.Sprintf("The short code '%s' was not found.", shortCode),
+			"The link may have already been deleted.")
+		return
+	}
+
+	if err != nil {
+		s.renderError(w, 500, "Database Error", "Failed to check link ownership", err.Error())
+		return
+	}
+
+	// Check if the user owns this link
+	if existingOwnerID != user.ID {
+		s.renderError(w, 403, "Access Denied",
+			"You can only delete links that you created.",
+			fmt.Sprintf("The link '%s' belongs to another user.", shortCode))
+		return
+	}
+
+	// Delete the link
+	result, err := s.db.Exec(
+		"DELETE FROM url_mappings WHERE short_code = ? AND owner_id = ?",
+		shortCode, user.ID,
+	)
+
+	if err != nil {
+		s.renderError(w, 500, "Database Error", "Failed to delete link", err.Error())
+		return
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		s.renderError(w, 500, "Database Error", "Failed to confirm deletion", err.Error())
+		return
+	}
+
+	if rowsAffected == 0 {
+		s.renderError(w, 404, "Delete Failed",
+			"No link was deleted. It may have already been removed.",
+			"Please check your dashboard for current links.")
+		return
+	}
+
+	// Success - redirect back to dashboard with a success message
+	// We could implement flash messages, but for now just redirect
+	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }
