@@ -18,9 +18,9 @@ import (
 )
 
 type Server struct {
-	db           *sql.DB
-	templates    *template.Template
-	discordAuth  *disgoauth.Client
+	db          *sql.DB
+	templates   *template.Template
+	discordAuth *disgoauth.Client
 }
 
 // Config represents the application configuration
@@ -30,7 +30,8 @@ type Config struct {
 		Secret string `toml:"secret"`
 	} `toml:"client"`
 	Server struct {
-		Port         string `toml:"port"`
+		Domain       string `toml:"domain"`
+		Port         int64  `toml:"port"`
 		DatabasePath string `toml:"database_path"`
 		RedirectURI  string `toml:"redirect_uri"`
 	} `toml:"server"`
@@ -38,11 +39,11 @@ type Config struct {
 
 // User represents a Discord user
 type User struct {
-	ID           string
-	Username     string
-	Avatar       string
+	ID            string
+	Username      string
+	Avatar        string
 	Discriminator string
-	CreatedAt    string
+	CreatedAt     string
 }
 
 // Session represents a user session
@@ -79,12 +80,12 @@ func main() {
 	defer server.db.Close()
 
 	port := config.Server.Port
-	if port == "" {
-		port = "8080"
+	if port == 0 {
+		port = 8080
 	}
 
-	log.Printf("Starting drop-reg.cc server on :%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, server))
+	log.Printf("Starting drop-reg.cc server on :%d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), server))
 }
 
 func NewServer(dbPath string, config *Config) (*Server, error) {
@@ -104,7 +105,7 @@ func NewServer(dbPath string, config *Config) (*Server, error) {
 	if redirectURI == "" {
 		redirectURI = "http://localhost:8080/auth/callback"
 	}
-	
+
 	discordAuth := disgoauth.Init(&disgoauth.Client{
 		ClientID:     config.Client.ID,
 		ClientSecret: config.Client.Secret,
@@ -187,13 +188,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleStatic(w, r)
 		return
 	}
-	
+
 	// Handle authentication routes
 	if strings.HasPrefix(path, "auth/") {
 		s.handleAuth(w, r, strings.TrimPrefix(path, "auth/"))
 		return
 	}
-	
+
 	// Handle dashboard (requires auth)
 	if path == "dashboard" {
 		s.handleDashboard(w, r)
@@ -207,13 +208,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated
 	user, _ := s.getCurrentUser(r)
-	
+
 	data := struct {
 		User *User
 	}{
 		User: user,
 	}
-	
+
 	w.Header().Set("Content-Type", "text/html")
 	err := s.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
@@ -437,11 +438,11 @@ func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Create or update user in database
 	user := &User{
-		ID:           userData["id"].(string),
-		Username:     userData["username"].(string),
+		ID:            userData["id"].(string),
+		Username:      userData["username"].(string),
 		Discriminator: userData["discriminator"].(string),
 	}
-	
+
 	if avatar, ok := userData["avatar"].(string); ok {
 		user.Avatar = avatar
 	}
@@ -504,7 +505,7 @@ func (s *Server) createSession(userID string) (string, error) {
 		"INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionID, userID, expiresAt.Format("2006-01-02 15:04:05"),
 	)
-	
+
 	return sessionID, err
 }
 
@@ -521,11 +522,11 @@ func (s *Server) getUserFromSession(sessionID string) (*User, error) {
 		JOIN sessions s ON u.id = s.user_id
 		WHERE s.id = ? AND s.expires_at > datetime('now')
 	`, sessionID).Scan(&user.ID, &user.Username, &user.Avatar, &user.Discriminator, &user.CreatedAt)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &user, nil
 }
 
@@ -534,7 +535,7 @@ func (s *Server) createOrUpdateUser(user *User) error {
 		INSERT OR REPLACE INTO users (id, username, avatar, discriminator)
 		VALUES (?, ?, ?, ?)
 	`, user.ID, user.Username, user.Avatar, user.Discriminator)
-	
+
 	return err
 }
 
@@ -549,7 +550,7 @@ func (s *Server) getCurrentUser(r *http.Request) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return s.getUserFromSession(cookie.Value)
 }
 
@@ -583,12 +584,12 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error scanning row: %v", err)
 			continue
 		}
-		
+
 		// Parse and format the created_at time
 		if t, err := time.Parse("2006-01-02 15:04:05", mapping.CreatedAt); err == nil {
 			mapping.CreatedAt = t.Format("Jan 2, 2006 15:04")
 		}
-		
+
 		links = append(links, mapping)
 	}
 
