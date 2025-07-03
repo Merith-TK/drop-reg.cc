@@ -1,0 +1,79 @@
+/* Table Styles */
+
+.links-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #1f2937;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.links-table th,
+.links-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #374151;
+}
+
+.links-table th {
+    background: #111827;
+    color: #f3f4f6;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.links-table tr:last-child td {
+    border-bottom: none;
+}
+
+.links-table tr:hover {
+    background: #254f7a;
+}
+
+/* Table Cell Styles */
+.short-code {
+    font-family: 'Courier New', monospace;
+    color: #60a5fa;
+    font-weight: bold;
+}
+
+.discord-url {
+    max-width: 300px;
+    word-break: break-all;
+    color: #9ca3af;
+}
+
+.created-at {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* Table Action Buttons */
+.test-link {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.test-link:hover {
+    text-decoration: underline;
+}
+
+.delete-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}

@@ -1,0 +1,137 @@
+/* Form Styles */
+
+/* Form Containers */
+.register-form {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #f3f4f6;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Input Wrappers */
+.input-wrapper {
+    position: relative;
+}
+
+/* Input with Prefix */
+.input-prefix {
+    display: flex;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-prefix:focus-within {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.input-prefix span {
+    background: #374151;
+    color: #9ca3af;
+    padding: 12px 15px;
+    border-right: 1px solid #4b5563;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.input-prefix input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 15px;
+    color: #f3f4f6;
+    font-size: 14px;
+    outline: none;
+}
+
+.input-prefix input::placeholder {
+    color: #6b7280;
+}
+
+/* Standard Form Inputs */
+.form-group input[type="url"],
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #f3f4f6;
+    font-size: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group input[type="url"]:focus,
+.form-group input[type="text"]:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.form-group input[type="url"]::placeholder,
+.form-group input[type="text"]::placeholder {
+    color: #6b7280;
+}
+
+/* Help Text */
+.help-text {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.help-text::before {
+    content: "💡";
+    font-size: 10px;
+}
+
+/* Submit Buttons */
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+}
+
+.submit-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}

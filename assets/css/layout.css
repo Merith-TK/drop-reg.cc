@@ -1,0 +1,125 @@
+/* Layout Components */
+
+/* User Info Section */
+.user-info {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #374151;
+}
+
+.user-details h2 {
+    margin: 0 0 5px 0;
+    color: #f3f4f6;
+}
+
+.user-details p {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* Navigation Header */
+.header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 15px 0;
+    border-bottom: 1px solid #374151;
+}
+
+.header-nav .nav-links {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Page Headers */
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    margin: 0 0 10px 0;
+    color: #f3f4f6;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+.page-header .subtitle {
+    color: #9ca3af;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+/* Dashboard Actions */
+.dashboard-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.dashboard-actions .btn {
+    min-width: 200px;
+}
+
+/* Info Boxes */
+.info-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-left: 4px solid #60a5fa;
+}
+
+.info-box h3 {
+    margin: 0 0 10px 0;
+    color: #f3f4f6;
+    font-size: 16px;
+}
+
+.info-box p {
+    margin: 0;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.info-box code {
+    background: #1e293b;
+    color: #60a5fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Empty States */
+.no-links {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+    background: #1f2937;
+    border-radius: 8px;
+    border: 1px solid #374151;
+}
+
+/* Container Variations */
+.register-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}

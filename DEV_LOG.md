@@ -62,6 +62,29 @@ A Discord invite URL shortener service for Helldivers community servers. Users c
 - **Template Updates**: Updated Go handlers to use correct template files
 - **File Structure**: Cleaner template organization with logical naming
 
+### CSS Modularization & Code Organization
+- **Modular CSS Structure**: Split inline styles into reusable CSS modules
+  - `base.css` - Core styles, typography, buttons, basic forms
+  - `layout.css` - Layout components (user info, headers, containers, info boxes)
+  - `forms.css` - Advanced form styling (register page, input prefixes, submit buttons)
+  - `tables.css` - Table styling for dashboard links display
+  - `error.css` - Error page specific styles
+  - `success.css` - Success page specific styles
+
+- **Template Cleanup**: Removed all inline `<style>` blocks from HTML templates
+- **File Consolidation**: 
+  - Removed `index.css` (consolidated into modular system)
+  - Removed `dashboard.html` (functionality moved to `index.html`)
+  - Updated all templates to use modular CSS imports
+
+- **Improved Maintainability**: 
+  - Shared styles are now reusable across pages
+  - Easier to update consistent styling
+  - Better separation of concerns
+  - Reduced code duplication
+
+- **CSS Loading Strategy**: Each page only loads the CSS modules it needs
+
 ## File Structure
 ```
 drop-reg.cc/
@@ -74,9 +97,11 @@ drop-reg.cc/
 └── assets/
     ├── css/
     │   ├── base.css       # Core dark theme styles
-    │   ├── index.css      # Home page styles
-    │   ├── success.css    # Success page styles
-    │   └── error.css      # Error page styles
+    │   ├── layout.css     # Layout components
+    │   ├── forms.css      # Advanced form styling
+    │   ├── tables.css     # Table styling
+    │   ├── error.css      # Error page specific styles
+    │   └── success.css    # Success page specific styles
     ├── index.html         # Home page with login/logout
     ├── success.html       # Registration success page
     ├── register.html      # Dedicated registration page
