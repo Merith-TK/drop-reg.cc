@@ -188,12 +188,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle list view
-	if path == "list" {
-		s.handleList(w, r)
-		return
-	}
-
 	// Handle static assets
 	if strings.HasPrefix(path, "assets/") {
 		s.handleStatic(w, r)
@@ -330,61 +324,6 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.templates.ExecuteTemplate(w, "success.html", data)
-	if err != nil {
-		http.Error(w, "Template error", http.StatusInternalServerError)
-		log.Printf("Template error: %v", err)
-	}
-}
-
-func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
-	// Check if user is authenticated - require login to view list
-	user, err := s.getCurrentUser(r)
-	if err != nil {
-		// Not authenticated, redirect to login
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
-		return
-	}
-
-	// Only show links owned by the current user
-	rows, err := s.db.Query(`
-		SELECT short_code, discord_url, created_at 
-		FROM url_mappings 
-		WHERE owner_id = ? AND (expires_at IS NULL OR expires_at > datetime('now'))
-		ORDER BY created_at DESC
-	`, user.ID)
-	if err != nil {
-		s.renderError(w, 500, "Database Error", "Failed to retrieve your links", err.Error())
-		return
-	}
-	defer rows.Close()
-
-	var links []URLMapping
-	for rows.Next() {
-		var mapping URLMapping
-		err := rows.Scan(&mapping.ShortCode, &mapping.DiscordURL, &mapping.CreatedAt)
-		if err != nil {
-			log.Printf("Error scanning row: %v", err)
-			continue
-		}
-
-		// Parse and format the created_at time
-		if t, err := time.Parse("2006-01-02 15:04:05", mapping.CreatedAt); err == nil {
-			mapping.CreatedAt = t.Format("Jan 2, 2006 15:04")
-		}
-
-		links = append(links, mapping)
-	}
-
-	data := struct {
-		User  *User
-		Links []URLMapping
-	}{
-		User:  user,
-		Links: links,
-	}
-
-	w.Header().Set("Content-Type", "text/html")
-	err = s.templates.ExecuteTemplate(w, "list.html", data)
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
