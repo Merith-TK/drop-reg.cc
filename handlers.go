@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -53,6 +54,17 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request, us
 	// Validate inputs
 	if shortCode == "" {
 		http.Error(w, "Short code is required", http.StatusBadRequest)
+		return
+	}
+
+	if len(shortCode) > 5 {
+		http.Error(w, "Short code must be 5 characters or less", http.StatusBadRequest)
+		return
+	}
+
+	// Validate alphanumeric characters only
+	if matched, _ := regexp.MatchString("^[a-zA-Z0-9]+$", shortCode); !matched {
+		http.Error(w, "Short code can only contain letters and numbers", http.StatusBadRequest)
 		return
 	}
 
