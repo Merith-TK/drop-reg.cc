@@ -30,7 +30,7 @@
         <div class="info-box">
             <h3>How it works</h3>
             <p>
-                Create easy-to-share links like <code>drop-reg.cc/hd597</code> that redirect to your Discord server invite. 
+                Create easy-to-share links like <code>hd597.{{.BaseDomain}}</code> that redirect to your Discord server invite. 
                 Perfect for sharing on social media, forums, or anywhere you need a clean, memorable link.
                 Short codes are limited to 5 characters for maximum brevity.
             </p>
@@ -41,12 +41,12 @@
                 <label for="short_code">Short Code</label>
                 <div class="input-wrapper">
                     <div class="input-prefix">
-                        <span>drop-reg.cc/</span>
                         <input type="text" id="short_code" name="short_code" required
                                pattern="[a-zA-Z0-9]{1,5}"
                                maxlength="5"
                                title="Only letters and numbers allowed, max 5 characters"
                                placeholder="hd597">
+                        <span>.{{.BaseDomain}}</span>
                     </div>
                     <div class="help-text">Only letters and numbers allowed, max 5 characters. Will be converted to lowercase.</div>
                 </div>

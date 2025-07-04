@@ -37,6 +37,7 @@ func InitServer(dbPath string, config *Config) (*Server, error) {
 		db:          db,
 		templates:   templates,
 		discordAuth: discordAuth,
+		config:      config,
 	}
 
 	// Initialize database schema
@@ -47,9 +48,74 @@ func InitServer(dbPath string, config *Config) (*Server, error) {
 	return server, nil
 }
 
+// getBaseDomain returns the base domain from the Host header
+func (s *Server) getBaseDomain(host string) string {
+	// Remove port if present
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	
+	// Split by dots
+	parts := strings.Split(host, ".")
+	
+	// For localhost or IP addresses, return as-is
+	if len(parts) < 2 || strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+		return host
+	}
+	
+	// For subdomains, get the last 2 parts (domain.tld)
+	if len(parts) >= 2 {
+		return strings.Join(parts[len(parts)-2:], ".")
+	}
+	
+	// Fallback to config domain if available
+	if s.config != nil && s.config.Server.Domain != "" {
+		return s.config.Server.Domain
+	}
+	
+	return host
+}
+
+// extractSubdomain extracts the subdomain from the Host header
+// Returns empty string if no subdomain or if subdomain is www
+func (s *Server) extractSubdomain(host string) string {
+	// Remove port if present
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+
+	// Split by dots
+	parts := strings.Split(host, ".")
+
+	// Need at least 3 parts for a subdomain (subdomain.domain.tld)
+	if len(parts) < 3 {
+		return ""
+	}
+
+	// Get the first part (subdomain)
+	subdomain := parts[0]
+
+	// Ignore www subdomain
+	if subdomain == "www" {
+		return ""
+	}
+
+	// Convert to lowercase for consistency
+	return strings.ToLower(subdomain)
+}
+
 // ServeHTTP implements http.Handler for routing
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/")
+
+	// Extract subdomain from Host header
+	subdomain := s.extractSubdomain(r.Host)
+
+	// If we have a subdomain, treat it as a shortcode redirect
+	if subdomain != "" {
+		s.handleRedirect(w, r, subdomain)
+		return
+	}
 
 	// Handle root path (dashboard)
 	if path == "" {
@@ -87,6 +153,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle short code redirect
-	s.handleRedirect(w, r, path)
+	// If no subdomain and path doesn't match any route, show 404
+	http.NotFound(w, r)
 }

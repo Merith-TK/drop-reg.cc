@@ -23,9 +23,11 @@ func (s *Server) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
 	// Handle GET request - show registration form
 	if r.Method == http.MethodGet {
 		data := struct {
-			User *User
+			User       *User
+			BaseDomain string
 		}{
-			User: user,
+			User:       user,
+			BaseDomain: s.getBaseDomain(r.Host),
 		}
 
 		w.Header().Set("Content-Type", "text/html")
@@ -90,9 +92,11 @@ func (s *Server) handleRegisterSubmit(w http.ResponseWriter, r *http.Request, us
 	data := struct {
 		ShortCode  string
 		DiscordURL string
+		BaseDomain string
 	}{
 		ShortCode:  shortCode,
 		DiscordURL: discordURL,
+		BaseDomain: s.getBaseDomain(r.Host),
 	}
 
 	err = s.templates.ExecuteTemplate(w, "success.html", data)
@@ -170,11 +174,13 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		User  *User
-		Links []URLMapping
+		User       *User
+		Links      []URLMapping
+		BaseDomain string
 	}{
-		User:  user,
-		Links: links,
+		User:       user,
+		Links:      links,
+		BaseDomain: s.getBaseDomain(r.Host),
 	}
 
 	w.Header().Set("Content-Type", "text/html")

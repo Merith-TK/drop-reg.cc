@@ -52,4 +52,5 @@ type Server struct {
 	db          *sql.DB
 	templates   *template.Template
 	discordAuth *disgoauth.Client
+	config      *Config
 }
